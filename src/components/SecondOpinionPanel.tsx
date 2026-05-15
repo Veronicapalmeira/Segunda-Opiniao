@@ -297,8 +297,8 @@ function SecondOpinionForm({
 
             {causa === "Sim" && (
               <>
-                <Field label="Qual a causa associada?">
-                  <RadioRow name="qual-causa" options={["Trauma", "Outra"]} />
+                <Field label="Qual a causa associada à(s) lesão(ões)?">
+                  <RadioRow name="qual-causa" options={["Trauma químico", "Trauma mecânico", "Trauma físico"]} />
                 </Field>
 
                     <Field label="Há quanto tempo?">
