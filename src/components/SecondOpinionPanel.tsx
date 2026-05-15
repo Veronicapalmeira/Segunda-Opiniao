@@ -346,7 +346,7 @@ function SecondOpinionForm({
             </Field>
 
             <Field label="Número de lesões">
-              <RadioRow name="num" options={["Única", "Distribuição bilateral", "Múltiplas"]} />
+              <CheckRow options={["Única", "Distribuição bilateral", "Múltiplas"]} />
             </Field>
 
             <Field label="Tamanho da lesão" required>
@@ -428,10 +428,13 @@ export function FloatingAssistants() {
 
       <div className="fixed z-40 flex flex-col items-end gap-3" style={{ bottom: floatBottom, right: 24 }}>
         <button
-          onClick={() => setOpen("chatbot")}
-          aria-label="Abrir chatbot"
-          title="Assistente / Chatbot"
-          className="flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg transition hover:scale-105"
+          type="button"
+          disabled
+          aria-disabled="true"
+          tabIndex={-1}
+          aria-label="Assistente SobreVidas (indisponível)"
+          title="Assistente SobreVidas"
+          className="flex h-14 w-14 items-center justify-center rounded-full text-white shadow-lg pointer-events-none opacity-60 cursor-not-allowed"
           style={{
             background: "linear-gradient(135deg, oklch(0.55 0.22 30), oklch(0.45 0.20 300))",
           }}
