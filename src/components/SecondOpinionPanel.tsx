@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { X, Stethoscope, Bot } from "lucide-react";
+import { X, Stethoscope, Bot, Maximize2, Minimize2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -16,7 +16,7 @@ const TREATMENT_OPTIONS = [
   "Práticas Integrativas Complementares",
   "Outros",
 ];
-const FUND_LESION = ["Mancha", "Placa", "Nódulo/tumefação", "Estrias", "Verrucosidade/vegetação", "Úlcera (mais profunda)", "Outra"];
+const FUND_LESION = ["Mancha", "Placa", "Nódulo/tumefação ou aumento de volume", "Estrias", "Verrucosidade/vegetação", "Úlcera (mais profunda)", "Outra"];
 const COLOR_OPTIONS = [
   "Semelhante à mucosa normal",
   "Branca homogênea",
@@ -27,6 +27,12 @@ const COLOR_OPTIONS = [
   "Acinzentada",
   "Escurecida",
   "Outra",
+];
+
+const SIZE_OPTIONS: { label: string; hint: string }[] = [
+  { label: "Menor que 0,5 cm", hint: "Igual ou menor ao tamanho de uma cabeça de alfinete comum." },
+  { label: "Entre 0,5 e 3,0 cm", hint: "Varia entre o tamanho de um grão de feijão (1 cm) a o de uma moeda de 1 real (2,7 cm)." },
+  { label: "Maior que 3,0 cm", hint: "A partir do tamanho de uma tampa de garrafa PET." },
 ];
 
 type ResizeDir = "n" | "s" | "e" | "w" | "ne" | "nw" | "se" | "sw";
@@ -50,6 +56,7 @@ function FloatingPanel({
   const [size, setSize] = useState(() => ({ w: kind === "second-opinion" ? 320 : 480, h: kind === "second-opinion" ? 360 : 560 }));
   const [pos, setPos] = useState<{ right: number; bottom: number }>({ right: 24, bottom: 96 });
   const [requestSecond, setRequestSecond] = useState<"sim" | "nao" | "">("");
+  const [fullscreen, setFullscreen] = useState(false);
 
   const startResize = (dir: ResizeDir) => (e: React.MouseEvent) => {
     e.preventDefault();
@@ -99,11 +106,19 @@ function FloatingPanel({
 
   return (
     <div
-      className="fixed z-50 flex flex-col rounded-2xl border border-border bg-card shadow-2xl"
-      style={{ width: size.w, height: size.h, right: pos.right, bottom: pos.bottom }}
+      className={`fixed z-50 flex flex-col border border-border bg-card shadow-2xl ${
+        fullscreen ? "inset-0 rounded-none" : "rounded-2xl"
+      }`}
+      style={
+        fullscreen
+          ? undefined
+          : { width: size.w, height: size.h, right: pos.right, bottom: pos.bottom }
+      }
     >
       <div
-        className={`flex items-center justify-between rounded-t-2xl px-4 py-3 text-primary-foreground ${
+        className={`flex items-center justify-between px-4 py-3 text-primary-foreground ${
+          fullscreen ? "" : "rounded-t-2xl"
+        } ${
           isSO ? "bg-gradient-to-r from-primary to-[oklch(0.5_0.2_330)]" : "bg-primary"
         }`}
       >
@@ -116,13 +131,23 @@ function FloatingPanel({
             {isSO && <p className="text-[11px] opacity-90">Recurso opcional</p>}
           </div>
         </div>
-        <button
-          onClick={onClose}
-          className="rounded-md p-1 hover:bg-white/15"
-          aria-label="Fechar"
-        >
-          <X className="h-4 w-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setFullscreen((f) => !f)}
+            className="rounded-md p-1 hover:bg-white/15"
+            aria-label={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
+            title={fullscreen ? "Sair da tela cheia" : "Tela cheia"}
+          >
+            {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 hover:bg-white/15"
+            aria-label="Fechar"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto p-4">
@@ -139,7 +164,9 @@ function FloatingPanel({
           : "Tire dúvidas sobre o sistema."}
       </div>
 
-      {/* Resize handles - all 8 directions */}
+      {/* Resize handles - all 8 directions (disabled in fullscreen) */}
+      {!fullscreen && (
+        <>
       <div onMouseDown={startResize("n")} className="absolute -top-1 left-2 right-2 h-2 cursor-ns-resize" />
       <div onMouseDown={startResize("s")} className="absolute -bottom-1 left-2 right-2 h-2 cursor-ns-resize" />
       <div onMouseDown={startResize("e")} className="absolute -right-1 top-2 bottom-2 w-2 cursor-ew-resize" />
@@ -156,6 +183,8 @@ function FloatingPanel({
           borderBottomRightRadius: "1rem",
         }}
       />
+        </>
+      )}
     </div>
   );
 }
@@ -172,11 +201,31 @@ function ChatbotPanel() {
   );
 }
 
-function Field({ label, children, required }: { label: string; required?: boolean; children: React.ReactNode }) {
+function Field({
+  label,
+  children,
+  required,
+  tooltip,
+}: {
+  label: string;
+  required?: boolean;
+  tooltip?: string;
+  children: React.ReactNode;
+}) {
   return (
     <div className="space-y-2">
       <Label className="text-sm font-medium block pb-1">
-        {label} {required && <span className="text-destructive">*</span>}
+        {label}
+        {required && <span className="text-destructive"> *</span>}
+        {tooltip && (
+          <span
+            title={tooltip}
+            aria-label={tooltip}
+            className="ml-1 inline-flex h-4 w-4 -translate-y-[1px] cursor-pointer items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary ring-1 ring-primary/30 hover:bg-primary/20"
+          >
+            ?
+          </span>
+        )}
       </Label>
       {children}
     </div>
@@ -202,7 +251,7 @@ function RadioRow({
     onChange?.(o);
   };
   return (
-    <div className="flex flex-wrap gap-3">
+    <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(140px,1fr))]">
       {options.map((o) => (
         <label
           key={o}
@@ -221,12 +270,25 @@ function RadioRow({
   );
 }
 
-function CheckRow({ options }: { options: string[] }) {
-  const [selected, setSelected] = useState<string[]>([]);
-  const toggle = (o: string) =>
-    setSelected((prev) => (prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]));
+function CheckRow({
+  options,
+  value,
+  onChange,
+}: {
+  options: string[];
+  value?: string[];
+  onChange?: (next: string[]) => void;
+}) {
+  const [internal, setInternal] = useState<string[]>([]);
+  const isControlled = value !== undefined;
+  const selected = isControlled ? value : internal;
+  const toggle = (o: string) => {
+    const next = selected.includes(o) ? selected.filter((x) => x !== o) : [...selected, o];
+    if (!isControlled) setInternal(next);
+    onChange?.(next);
+  };
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="grid gap-2 grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
       {options.map((o) => (
         <label
           key={o}
@@ -243,6 +305,39 @@ function CheckRow({ options }: { options: string[] }) {
   );
 }
 
+function TempoLesao() {
+  const [unidade, setUnidade] = useState<string>("Dias");
+  const [valor, setValor] = useState<string>("");
+  return (
+    <div className="flex items-stretch rounded-md border border-input bg-background overflow-hidden focus-within:ring-2 focus-within:ring-ring">
+      <input
+        type="number"
+        min={0}
+        value={valor}
+        onChange={(e) => setValor(e.target.value)}
+        className="min-w-0 flex-1 bg-transparent px-3 py-1.5 text-sm outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+        placeholder="Digite o tempo"
+      />
+      <select
+        value={unidade}
+        onChange={(e) => setUnidade(e.target.value)}
+        aria-label="Unidade de tempo"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+          backgroundRepeat: "no-repeat",
+          backgroundPosition: "right 4px center",
+        }}
+        className="appearance-none border-l border-input bg-muted/40 pl-3 pr-6 py-1.5 text-sm outline-none cursor-pointer hover:bg-muted"
+      >
+        <option value="Dias">Dias</option>
+        <option value="Meses">Meses</option>
+        <option value="Anos">Anos</option>
+      </select>
+    </div>
+  );
+}
+
 function SecondOpinionForm({
   requestSecond,
   setRequestSecond,
@@ -252,15 +347,32 @@ function SecondOpinionForm({
 }) {
   const [causa, setCausa] = useState("");
   const [sintoma, setSintoma] = useState("");
+  const [sintomasSelecionados, setSintomasSelecionados] = useState<string[]>([]);
+  const [escalaDor, setEscalaDor] = useState<number>(0);
   const [tratamento, setTratamento] = useState("");
+  const [tratamentosSelecionados, setTratamentosSelecionados] = useState<string[]>([]);
+  const [lesaoFundamental, setLesaoFundamental] = useState<string>("");
+  const [numeroLesoes, setNumeroLesoes] = useState<string[]>([]);
+  const [coresSelecionadas, setCoresSelecionadas] = useState<string[]>([]);
+
+  const handleNumeroLesoes = (next: string[]) => {
+    // "Única" e "Múltiplas" são mutuamente exclusivas; ambas podem coexistir com "Distribuição bilateral".
+    const prev = numeroLesoes;
+    const added = next.find((o) => !prev.includes(o));
+    let result = next;
+    if (added === "Única") result = next.filter((o) => o !== "Múltiplas");
+    else if (added === "Múltiplas") result = next.filter((o) => o !== "Única");
+    setNumeroLesoes(result);
+  };
+
+  const toggleSintoma = (o: string) =>
+    setSintomasSelecionados((prev) =>
+      prev.includes(o) ? prev.filter((x) => x !== o) : [...prev, o]
+    );
 
   return (
     <div className="space-y-5">
-      <p className="text-sm text-muted-foreground">
-        Solicite a opinião de um especialista quando achar útil.
-      </p>
-
-      <Field label="Deseja solicitar segunda opinião de um especialista?" required>
+      <Field label="Deseja solicitar segunda opinião de um especialista?">
         <div className="flex gap-3 w-full">
           {(["sim", "nao"] as const).map((v) => (
             <label key={v} className="flex flex-1 items-center gap-2 rounded-md border border-border px-4 py-2 text-sm cursor-pointer hover:bg-muted justify-start">
@@ -277,94 +389,234 @@ function SecondOpinionForm({
       </Field>
 
       {requestSecond === "sim" && (
-        <div className="space-y-6">
+        <div className="space-y-8">
+          {/* =============== 1. FATORES DE RISCO PRÉVIOS =============== */}
           <section className="space-y-4">
             <h4 className="text-sm font-semibold uppercase tracking-wide text-primary">
-              Anamnese: Antecedentes e Hábitos de Vida
+              Fatores de risco prévios
             </h4>
 
+            {/* Nível 2 [1..1] */}
             <Field label="Possui lesão(ões) na boca há mais de duas semanas?" required>
               <RadioRow name="lesao-2sem" options={["Não", "Sim", "Não sei"]} />
             </Field>
 
-            <Field label="Histórico da doença atual">
-              <Textarea rows={2} placeholder="Informações acerca da história clínica..." />
+            {/* Nível 3 [1..N] */}
+            <Field
+              label="Histórico da doença atual (para cada lesão)"
+              required
+              tooltip="Informações acerca do início da lesão (Onde, como, quando e porquê?); O que melhora? O que piora? Intervenções realizadas, etc."
+            >
+              <Textarea rows={3} placeholder="Digite aqui..." />
             </Field>
 
+            {/* Nível 4 [1..1] */}
             <Field label="Possui alguma causa associada à(s) lesão(ões)?" required>
               <RadioRow name="causa" value={causa} onChange={setCausa} options={["Não", "Sim", "Não sei"]} />
             </Field>
 
+            {/* Nível 4 [0..1] — condicional a "Sim" */}
             {causa === "Sim" && (
-              <>
-                <Field label="Qual a causa associada à(s) lesão(ões)?">
-                  <RadioRow name="qual-causa" options={["Trauma químico", "Trauma mecânico", "Trauma físico"]} />
-                </Field>
-
-                    <Field label="Há quanto tempo?">
-                      <input
-                        className="w-full rounded-md border border-input bg-background px-2 py-1.5 text-sm"
-                        placeholder="Ex: 2 semanas, 3 meses, 1 ano"
-                      />
-                    </Field>
-              </>
+              <Field label="Qual a causa associada à(s) lesão(ões)?">
+                <RadioRow
+                  name="qual-causa"
+                  options={["Trauma químico", "Trauma mecânico", "Trauma físico"]}
+                />
+              </Field>
             )}
 
-            <Field label="Presença de sintomatologia">
+            {/* Nível 4 [0..1] */}
+            <Field label="Há quanto tempo desta(s) lesão(ões)?">
+              <TempoLesao />
+            </Field>
+
+            {/* Nível 4 [0..1] */}
+            <Field label="Evolução desta(s) lesão(ões)?">
+              <RadioRow name="evol" options={["Melhora", "Piora", "Estável", "Não sei informar"]} />
+            </Field>
+
+            {/* Nível 4 [0..1] */}
+            <Field label="Paciente apresenta sintoma(s) relacionado à(s) lesão(ões)?">
               <RadioRow name="sint" value={sintoma} onChange={setSintoma} options={["Não", "Sim"]} />
               {sintoma === "Sim" && (
-                <div className="pt-2">
-                  <Label className="mb-2 block text-xs text-muted-foreground">Qual?</Label>
-                  <CheckRow options={SYMPTOM_OPTIONS} />
+                <div className="pt-2 space-y-3">
+                  <Label className="text-sm font-medium block pb-1">Qual?</Label>
+                  <div className="grid gap-2 grid-cols-[repeat(auto-fit,minmax(160px,1fr))]">
+                    {SYMPTOM_OPTIONS.map((o) => (
+                      <label
+                        key={o}
+                        className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm cursor-pointer hover:bg-muted"
+                      >
+                        <Checkbox
+                          checked={sintomasSelecionados.includes(o)}
+                          onCheckedChange={() => toggleSintoma(o)}
+                        />
+                        <span>{o}</span>
+                      </label>
+                    ))}
+                  </div>
+
+                  {/* Nível 4 [0..1] — Escala de dor (condicional a "Dor") */}
+                  {sintomasSelecionados.includes("Dor") && (
+                    <div className="rounded-md border border-border bg-muted/40 p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label className="text-xs font-medium">Escala de dor</Label>
+                        <span className="text-sm font-semibold tabular-nums">
+                          {escalaDor} / 10
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={10}
+                        step={1}
+                        value={escalaDor}
+                        onChange={(e) => setEscalaDor(Number(e.target.value))}
+                        className="w-full accent-primary"
+                      />
+                      <div className="flex justify-between text-[10px] text-muted-foreground">
+                        <span>0 · sem dor</span>
+                        <span>10 · dor máxima</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </Field>
 
-            <Field label="Foi realizado algum tipo de tratamento?">
+            {/* Nível 4 [0..1] */}
+            <Field label="Foi realizado algum tipo de tratamento para à(s) lesão(ões)?">
               <RadioRow name="trat" value={tratamento} onChange={setTratamento} options={["Não", "Sim", "Não sei"]} />
               {tratamento === "Sim" && (
-                <div className="pt-2">
-                  <Label className="mb-2 block text-xs text-muted-foreground">Qual o tratamento realizado?</Label>
-                  <CheckRow options={TREATMENT_OPTIONS} />
+                <div className="pt-2 space-y-3">
+                  <Label className="text-sm font-medium block pb-1">
+                    Qual o tratamento realizado?
+                  </Label>
+                  <CheckRow
+                    options={TREATMENT_OPTIONS}
+                    value={tratamentosSelecionados}
+                    onChange={setTratamentosSelecionados}
+                  />
+                  {tratamentosSelecionados.includes("Outros") && (
+                    <div className="pt-1">
+                      <Label className="text-sm font-medium block pb-1">
+                        Descreva o(s) outro(s) tratamento(s)
+                      </Label>
+                      <Textarea rows={2} placeholder="Digite aqui..." />
+                    </div>
+                  )}
                 </div>
               )}
-            </Field>
-
-            <Field label="Evolução">
-              <RadioRow name="evol" options={["Melhora", "Piora", "Estável", "Não sei informar"]} />
             </Field>
           </section>
 
+          {/* =============== 2. APRESENTAÇÃO CLÍNICA DA LESÃO =============== */}
           <section className="space-y-4">
-
             <h4 className="text-sm font-semibold uppercase tracking-wide text-primary">
               Apresentação Clínica da Lesão
             </h4>
 
-            <Field label="Tipo de lesão fundamental">
-              <CheckRow options={FUND_LESION} />
+            {/* Nível 2 [1..N] */}
+            <Field label="Apresentação clínica da lesão (Lesão fundamental)" required>
+              <div className="space-y-3">
+                <div className="relative">
+                  <select
+                    value={lesaoFundamental}
+                    onChange={(e) => setLesaoFundamental(e.target.value)}
+                    aria-label="Lesão fundamental"
+                    style={{
+                      backgroundImage:
+                        "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23737373' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'><polyline points='6 9 12 15 18 9'/></svg>\")",
+                      backgroundRepeat: "no-repeat",
+                      backgroundPosition: "right 8px center",
+                    }}
+                    className="w-full appearance-none rounded-md border border-input bg-background px-3 pr-8 py-2 text-sm outline-none cursor-pointer hover:bg-muted/30 focus:ring-2 focus:ring-ring"
+                  >
+                    <option value="" disabled>
+                      Selecione uma opção
+                    </option>
+                    {FUND_LESION.map((o) => (
+                      <option key={o} value={o}>
+                        {o}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+                {lesaoFundamental === "Outra" && (
+                  <div>
+                    <Label className="text-sm font-medium block pb-1">
+                      Descreva a lesão fundamental
+                    </Label>
+                    <Textarea rows={2} placeholder="Digite aqui..." />
+                  </div>
+                )}
+              </div>
             </Field>
 
-            <Field label="Número de lesões">
-              <CheckRow options={["Única", "Distribuição bilateral", "Múltiplas"]} />
+            {/* Nível 3 [1..N] */}
+            <Field label="Número de lesões" required>
+              <CheckRow
+                options={["Única", "Distribuição bilateral", "Múltiplas"]}
+                value={numeroLesoes}
+                onChange={handleNumeroLesoes}
+              />
             </Field>
 
+            {/* Nível 3 [1..1] — com tooltip por opção */}
             <Field label="Tamanho da lesão" required>
-              <RadioRow name="tam" options={["Menor que 0,5 cm", "Entre 0,5 e 3,0 cm", "Maior que 3,0 cm"]} />
+              <div className="grid gap-3 grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
+                {SIZE_OPTIONS.map((o) => (
+                  <label
+                    key={o.label}
+                    className="flex items-center gap-2 rounded-md border border-border px-3 py-1.5 text-sm cursor-pointer hover:bg-muted"
+                  >
+                    <input type="radio" name="tam" />
+                    <span>{o.label}</span>
+                    <span
+                      title={o.hint}
+                      aria-label={o.hint}
+                      onClick={(e) => e.preventDefault()}
+                      className="ml-1 inline-flex h-4 w-4 -translate-y-[1px] cursor-pointer items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary ring-1 ring-primary/30 hover:bg-primary/20"
+                    >
+                      ?
+                    </span>
+                  </label>
+                ))}
+              </div>
             </Field>
 
+            {/* Nível 3 [1..N] */}
             <Field label="Cor da lesão" required>
-              <CheckRow options={COLOR_OPTIONS} />
+              <div className="space-y-3">
+                <CheckRow
+                  options={COLOR_OPTIONS}
+                  value={coresSelecionadas}
+                  onChange={setCoresSelecionadas}
+                />
+                {coresSelecionadas.includes("Outra") && (
+                  <div>
+                    <Label className="text-sm font-medium block pb-1">
+                      Descreva a(s) outra(s) cor(es)
+                    </Label>
+                    <Textarea rows={2} placeholder="Digite aqui..." />
+                  </div>
+                )}
+              </div>
             </Field>
 
+            {/* Nível 3 [1..1] */}
             <Field label="Lesão removível à raspagem" required>
               <RadioRow name="rasp" options={["Não", "Sim", "Não se aplica"]} />
             </Field>
           </section>
 
+          {/* =============== 3. DÚVIDA AO ESPECIALISTA =============== */}
           <section className="space-y-2">
-            <Label className="text-sm font-semibold">
-              Descreva sua dúvida ao especialista <span className="text-destructive">*</span>
+            <h4 className="text-sm font-semibold uppercase tracking-wide text-primary">
+              Dúvida ao especialista
+            </h4>
+            <Label className="text-sm font-medium">
+              Descreva a sua dúvida ao especialista <span className="text-destructive">*</span>
             </Label>
             <p className="text-xs text-muted-foreground">
               Informe de forma objetiva sua dúvida e as informações clínicas da lesão e do paciente.
