@@ -456,14 +456,30 @@ function SecondOpinionForm({
                     ))}
                   </div>
 
-                  {/* Nível 4 [0..1] — Escala de dor (condicional a "Dor") */}
+                  {/* Nível 4 [0..1] — Escala EVA (condicional a "Dor") */}
                   {sintomasSelecionados.includes("Dor") && (
                     <div className="rounded-md border border-border bg-muted/40 p-3 space-y-2">
-                      <div className="flex items-center justify-between">
-                        <Label className="text-xs font-medium">Escala de dor</Label>
+                      <div className="flex items-center justify-between gap-2">
+                        <Label className="text-xs font-medium">
+                          Escala Visual Analógica (EVA)
+                        </Label>
                         <span className="text-sm font-semibold tabular-nums">
                           {escalaDor} / 10
                         </span>
+                      </div>
+                      <div className="flex justify-between px-0.5 text-base leading-none" aria-hidden>
+                        {["😀", "🙂", "😐", "😟", "😣", "😭"].map((face, i) => {
+                          const v = i * 2;
+                          const active = escalaDor >= v - 1 && escalaDor <= v + 1;
+                          return (
+                            <span
+                              key={i}
+                              className={`transition ${active ? "scale-125 opacity-100" : "opacity-40"}`}
+                            >
+                              {face}
+                            </span>
+                          );
+                        })}
                       </div>
                       <input
                         type="range"
@@ -476,7 +492,7 @@ function SecondOpinionForm({
                       />
                       <div className="flex justify-between text-[10px] text-muted-foreground">
                         <span>0 · sem dor</span>
-                        <span>10 · dor máxima</span>
+                        <span>10 · pior dor imaginável</span>
                       </div>
                     </div>
                   )}
