@@ -29,6 +29,11 @@ export const Route = createFileRoute("/")({
 
 function PatientPage() {
   const [tab, setTab] = useState<"avaliacao" | "conduta">("avaliacao");
+  // Pré-selecionado para o protótipo (simula seleção na tela de Avaliação Clínica)
+  const [selectedRegions, setSelectedRegions] = useState<string[]>([
+    "Lábio",
+    "Mucosa Labial Superior",
+  ]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -141,11 +146,18 @@ function PatientPage() {
             <div className="h-0.5 flex-1 bg-border" />
           </div>
 
-          {tab === "avaliacao" ? <AvaliacaoTab /> : <CondutaTab />}
+          {tab === "avaliacao" ? (
+            <AvaliacaoTab
+              selectedRegions={selectedRegions}
+              setSelectedRegions={setSelectedRegions}
+            />
+          ) : (
+            <CondutaTab />
+          )}
         </main>
       </div>
 
-      <FloatingAssistants />
+      <FloatingAssistants availableRegions={selectedRegions} />
     </div>
   );
 }
@@ -186,8 +198,16 @@ function Tag({ children }: { children: React.ReactNode }) {
   );
 }
 
-function AvaliacaoTab() {
-  const [hasLesion, setHasLesion] = useState<"sim" | "nao" | "">("");
+function AvaliacaoTab({
+  selectedRegions,
+}: {
+  selectedRegions: string[];
+  setSelectedRegions: (regions: string[]) => void;
+}) {
+  const [hasLesion, setHasLesion] = useState<"sim" | "nao" | "">(
+    selectedRegions.length > 0 ? "sim" : ""
+  );
+
   return (
     <div className="space-y-6">
       <div>
@@ -209,12 +229,6 @@ function AvaliacaoTab() {
           ))}
         </div>
       </div>
-
-      {hasLesion === "sim" && (
-        <div className="rounded-lg border border-dashed border-border p-6 text-sm text-muted-foreground">
-          Selecione regiões da boca com lesão para avaliação clínica detalhada.
-        </div>
-      )}
     </div>
   );
 }

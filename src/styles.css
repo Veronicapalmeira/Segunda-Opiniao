@@ -144,4 +144,34 @@
     background-color: var(--color-background);
     color: var(--color-foreground);
   }
+
+  button,
+  a,
+  [role="button"],
+  [role="link"],
+  [role="menuitem"],
+  [role="tab"],
+  [role="option"],
+  [role="checkbox"],
+  [role="radio"],
+  [role="switch"],
+  summary,
+  label[for],
+  select,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  input[type="checkbox"],
+  input[type="radio"],
+  input[type="file"] {
+    cursor: pointer;
+  }
+
+  button:disabled,
+  a[aria-disabled="true"],
+  [role="button"][aria-disabled="true"],
+  [data-disabled],
+  [disabled] {
+    cursor: not-allowed;
+  }
 }
