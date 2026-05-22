@@ -697,7 +697,7 @@ function LesionFormFields({
   return (
         <div className="space-y-8">
           {/* =============== 1. FATORES DE RISCO PRÉVIOS =============== */}
-          <section className="space-y-4">
+          <section className="space-y-4 pt-4">
             <h4 className="text-sm font-semibold uppercase tracking-wide text-primary">
               Fatores de risco prévios
             </h4>
